@@ -1,0 +1,242 @@
+openapi: 3.1.0
+info:
+  title: Studio Study Helper API
+  version: 1.0.0
+  description: >
+    JSON API for the Studio study-helper app. Covers annotation CRUD
+    (highlights, notes, drawings) and AI generation (summary / explanation).
+    Successful JSON responses use the envelope `{ data, meta?, errors? }`.
+    AI endpoints stream `text/plain` chunks rather than JSON.
+
+servers:
+  - url: http://localhost:8000
+    description: Local development
+
+paths:
+  /api/v1/documents/{document}/annotations:
+    post:
+      summary: Create an annotation
+      operationId: createAnnotation
+      tags: [Annotations]
+      parameters:
+        - $ref: '#/components/parameters/DocumentId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AnnotationInput'
+      responses:
+        '201':
+          description: Annotation created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Annotation'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+
+  /api/v1/documents/{document}/annotations/{annotation}:
+    patch:
+      summary: Update an annotation
+      operationId: updateAnnotation
+      tags: [Annotations]
+      parameters:
+        - $ref: '#/components/parameters/DocumentId'
+        - $ref: '#/components/parameters/AnnotationId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [page, payload]
+              properties:
+                page:
+                  type: integer
+                  minimum: 1
+                payload:
+                  type: object
+      responses:
+        '200':
+          description: Annotation updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Annotation'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+    delete:
+      summary: Delete an annotation
+      operationId: deleteAnnotation
+      tags: [Annotations]
+      parameters:
+        - $ref: '#/components/parameters/DocumentId'
+        - $ref: '#/components/parameters/AnnotationId'
+      responses:
+        '200':
+          description: Annotation deleted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: 'null'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/v1/documents/{document}/ai/summary:
+    post:
+      summary: Stream a summary of the document or a page
+      operationId: summarizeDocument
+      tags: [AI]
+      parameters:
+        - $ref: '#/components/parameters/DocumentId'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                page:
+                  type: integer
+                  minimum: 1
+                  nullable: true
+                  description: Summarize only this page; omit for the whole document.
+      responses:
+        '200':
+          description: Streamed plain-text summary (chunked)
+          content:
+            text/plain:
+              schema:
+                type: string
+
+  /api/v1/documents/{document}/ai/explain:
+    post:
+      summary: Stream an explanation of a selected passage
+      operationId: explainSelection
+      tags: [AI]
+      parameters:
+        - $ref: '#/components/parameters/DocumentId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [text]
+              properties:
+                text:
+                  type: string
+                  maxLength: 5000
+                page:
+                  type: integer
+                  minimum: 1
+                  nullable: true
+      responses:
+        '200':
+          description: Streamed plain-text explanation (chunked)
+          content:
+            text/plain:
+              schema:
+                type: string
+        '422':
+          $ref: '#/components/responses/ValidationError'
+
+components:
+  parameters:
+    DocumentId:
+      name: document
+      in: path
+      required: true
+      schema:
+        type: integer
+    AnnotationId:
+      name: annotation
+      in: path
+      required: true
+      schema:
+        type: integer
+
+  schemas:
+    AnnotationInput:
+      type: object
+      required: [type, page, payload]
+      properties:
+        type:
+          type: string
+          enum: [highlight, note, drawing]
+        page:
+          type: integer
+          minimum: 1
+        payload:
+          type: object
+          description: Shape depends on `type` (highlight/note/drawing).
+    Annotation:
+      type: object
+      required: [id, document_id, type, page, payload]
+      properties:
+        id:
+          type: integer
+        document_id:
+          type: integer
+        type:
+          type: string
+          enum: [highlight, note, drawing]
+        page:
+          type: integer
+        payload:
+          type: object
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+    Error:
+      type: object
+      required: [message]
+      properties:
+        message:
+          type: string
+        code:
+          type: string
+        field:
+          type: string
+
+  responses:
+    ValidationError:
+      description: Validation failed
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              data:
+                type: 'null'
+              errors:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Error'
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              data:
+                type: 'null'
+              errors:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Error'
