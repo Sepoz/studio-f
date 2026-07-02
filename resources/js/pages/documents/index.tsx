@@ -1,9 +1,8 @@
-import { Head, Link, router, useForm, usePoll } from '@inertiajs/react';
+import { Head, Link, router, useForm } from '@inertiajs/react';
 import { FileText, Loader2, Trash2, Upload } from 'lucide-react';
 import { useRef, useState } from 'react';
 import type { DragEvent } from 'react';
 
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
     Card,
@@ -45,23 +44,6 @@ function formatBytes(bytes: number): string {
     return `${value.toFixed(1)} ${units[unit]}`;
 }
 
-function StatusBadge({ status }: { status: string }) {
-    if (status === 'ready') {
-        return <Badge variant="default">Ready</Badge>;
-    }
-
-    if (status === 'failed') {
-        return <Badge variant="destructive">Failed</Badge>;
-    }
-
-    return (
-        <Badge variant="secondary" className="gap-1">
-            <Loader2 className="size-3 animate-spin" />
-            Processing
-        </Badge>
-    );
-}
-
 export default function DocumentsIndex({
     documents: docs,
 }: DocumentsIndexProps) {
@@ -73,13 +55,6 @@ export default function DocumentsIndex({
     }>({
         file: null,
     });
-
-    // Keep polling while any document is still being processed.
-    usePoll(
-        3000,
-        { only: ['documents'] },
-        { autoStart: docs.some((doc) => doc.status === 'processing') },
-    );
 
     const upload = (file: File) => {
         setData('file', file);
@@ -187,14 +162,8 @@ export default function DocumentsIndex({
                                 </CardTitle>
                             </CardHeader>
                             <CardContent className="flex-1">
-                                <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                                    <StatusBadge status={doc.status} />
-                                    <span>
-                                        {doc.page_count
-                                            ? `${doc.page_count} pages · `
-                                            : ''}
-                                        {formatBytes(doc.size_bytes)}
-                                    </span>
+                                <div className="text-xs text-muted-foreground">
+                                    {formatBytes(doc.size_bytes)}
                                 </div>
                             </CardContent>
                             <CardFooter className="gap-2">

@@ -7,8 +7,6 @@ use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Validation\Rules\Password;
-use Smalot\PdfParser\Config as PdfParserConfig;
-use Smalot\PdfParser\Parser as PdfParser;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -17,14 +15,7 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        // Parse PDFs without retaining embedded image binary data — the main
-        // memory hog in smalot/pdfparser — so page counting survives large files.
-        $this->app->bind(PdfParser::class, function (): PdfParser {
-            $config = new PdfParserConfig;
-            $config->setRetainImageContent(false);
-
-            return new PdfParser([], $config);
-        });
+        //
     }
 
     /**

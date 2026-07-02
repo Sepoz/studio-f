@@ -25,16 +25,6 @@ class DocumentFactory extends Factory
             'path' => 'documents/'.fake()->uuid().'.pdf',
             'mime_type' => 'application/pdf',
             'size_bytes' => fake()->numberBetween(50_000, 5_000_000),
-            'page_count' => fake()->numberBetween(1, 300),
-            'status' => 'ready',
         ];
-    }
-
-    public function processing(): static
-    {
-        return $this->state(fn (): array => [
-            'status' => 'processing',
-            'page_count' => null,
-        ]);
     }
 }

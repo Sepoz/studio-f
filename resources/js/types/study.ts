@@ -8,8 +8,6 @@ export interface DocumentSummary {
     original_filename: string;
     mime_type: string;
     size_bytes: number;
-    page_count: number | null;
-    status: string;
     created_at: string;
     updated_at: string;
 }

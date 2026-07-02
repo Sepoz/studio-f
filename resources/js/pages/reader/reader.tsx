@@ -52,6 +52,7 @@ export default function Reader({ document, annotations }: ReaderProps) {
     const [notesOpen, setNotesOpen] = useState(true);
     const [aiOpen, setAiOpen] = useState(false);
     const [currentPage, setCurrentPage] = useState(1);
+    const [numPages, setNumPages] = useState(0);
     const scrollToPageRef = useRef<((page: number) => void) | null>(null);
     const pdfRef = useRef<PDFDocumentProxy | null>(null);
     // true on the client, false during SSR — gates the client-only PDF viewer.
@@ -123,7 +124,7 @@ export default function Reader({ document, annotations }: ReaderProps) {
                 </p>
                 <p className="font-mono text-xs text-muted-foreground uppercase">
                     Page {currentPage}
-                    {document.page_count ? ` of ${document.page_count}` : ''}
+                    {numPages > 0 ? ` of ${numPages}` : ''}
                 </p>
             </div>
             <Toolbar
@@ -179,7 +180,7 @@ export default function Reader({ document, annotations }: ReaderProps) {
                                 onPdfLoad={(pdf) => {
                                     pdfRef.current = pdf;
                                 }}
-                                onNumPages={() => undefined}
+                                onNumPages={setNumPages}
                                 onVisiblePageChange={setCurrentPage}
                                 scrollToPageRef={scrollToPageRef}
                                 persistKey={`reader:${document.id}:page`}

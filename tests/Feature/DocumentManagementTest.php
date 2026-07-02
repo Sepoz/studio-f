@@ -1,10 +1,8 @@
 <?php
 
-use App\Jobs\CountDocumentPages;
 use App\Models\Annotation;
 use App\Models\Document;
 use Illuminate\Http\UploadedFile;
-use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Facades\Storage;
 
 it('lists documents on the library page', function () {
@@ -18,9 +16,8 @@ it('lists documents on the library page', function () {
         );
 });
 
-it('stores an uploaded pdf, dispatches page counting, and marks it processing', function () {
+it('stores an uploaded pdf', function () {
     Storage::fake('local');
-    Queue::fake();
 
     $file = UploadedFile::fake()->create('lecture-notes.pdf', 200, 'application/pdf');
 
@@ -29,12 +26,11 @@ it('stores an uploaded pdf, dispatches page counting, and marks it processing', 
 
     $document = Document::sole();
 
-    expect($document->status)->toBe('processing')
-        ->and($document->title)->toBe('lecture-notes')
-        ->and($document->mime_type)->toBe('application/pdf');
+    expect($document->title)->toBe('lecture-notes')
+        ->and($document->mime_type)->toBe('application/pdf')
+        ->and($document->size_bytes)->toBe($file->getSize());
 
     Storage::disk('local')->assertExists($document->path);
-    Queue::assertPushed(CountDocumentPages::class);
 });
 
 it('rejects non-pdf uploads', function () {

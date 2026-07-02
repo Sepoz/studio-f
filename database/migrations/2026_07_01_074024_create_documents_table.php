@@ -18,8 +18,6 @@ return new class extends Migration
             $table->string('path');
             $table->string('mime_type')->default('application/pdf');
             $table->unsignedBigInteger('size_bytes');
-            $table->unsignedSmallInteger('page_count')->nullable();
-            $table->string('status')->default('ready');
             $table->timestamps();
         });
     }
